@@ -80,9 +80,78 @@ impl Color {
         }
     }
 
+    pub fn parse_color(s: &str) -> Result<Color, String> {
+        if let Ok(c) = Color::from_hex(s) {
+            Ok(c)
+        } else if let Ok(c) = Self::parse_rgb(s) {
+            Ok(c)
+        } else if let Ok(c) = Self::parse_rgba(s) {
+            Ok(c)
+        } else if let Ok(c) = Self::parse_hsl(s) {
+            Ok(c)
+        } else {
+            Err("Invalid color format".to_string())
+        }
+    }
+
+    // Parse from a hex string
+    pub fn parse_hex(hex: &str) -> Result<Self, String> {
+        if !hex.starts_with('#') || (hex.len() != 7 && hex.len() != 9) {
+            return Err("Invalid hex color format".to_string());
+        }
+        let r = u8::from_str_radix(&hex[1..3], 16).map_err(|_| "Invalid hex value")? as f64 / 255.0;
+        let g = u8::from_str_radix(&hex[3..5], 16).map_err(|_| "Invalid hex value")? as f64 / 255.0;
+        let b = u8::from_str_radix(&hex[5..7], 16).map_err(|_| "Invalid hex value")? as f64 / 255.0;
+        let a = if hex.len() == 9 {
+            Some(
+                u8::from_str_radix(&hex[7..9], 16).map_err(|_| "Invalid hex value")? as f64 / 255.0,
+            )
+        } else {
+            None
+        };
+        Ok(Self::from_rgba(r, g, b, a.unwrap_or(1.0)))
+    }
+
+    // Parse from an RGB string
+    pub fn parse_rgb(s: &str) -> Result<Self, String> {
+        let parts: Vec<&str> = s.split(',').collect();
+        if parts.len() != 3 {
+            return Err("Invalid RGB format".to_string());
+        }
+        let r: f64 = parts[0].trim().parse().map_err(|_| "Invalid RGB value")?;
+        let g: f64 = parts[1].trim().parse().map_err(|_| "Invalid RGB value")?;
+        let b: f64 = parts[2].trim().parse().map_err(|_| "Invalid RGB value")?;
+        Ok(Self::from_rgb(r / 255.0, g / 255.0, b / 255.0))
+    }
+
+    // Parse from an RGBA string
+    pub fn parse_rgba(s: &str) -> Result<Self, String> {
+        let parts: Vec<&str> = s.split(',').collect();
+        if parts.len() != 4 {
+            return Err("Invalid RGBA format".to_string());
+        }
+        let r: f64 = parts[0].trim().parse().map_err(|_| "Invalid RGBA value")?;
+        let g: f64 = parts[1].trim().parse().map_err(|_| "Invalid RGBA value")?;
+        let b: f64 = parts[2].trim().parse().map_err(|_| "Invalid RGBA value")?;
+        let a: f64 = parts[3].trim().parse().map_err(|_| "Invalid RGBA value")?;
+        Ok(Self::from_rgba(r / 255.0, g / 255.0, b / 255.0, a))
+    }
+
+    // Parse from an HSL string
+    pub fn parse_hsl(s: &str) -> Result<Self, String> {
+        let parts: Vec<&str> = s.split(',').collect();
+        if parts.len() != 3 {
+            return Err("Invalid HSL format".to_string());
+        }
+        let h: f64 = parts[0].trim().parse().map_err(|_| "Invalid HSL value")?;
+        let s: f64 = parts[1].trim().parse().map_err(|_| "Invalid HSL value")?;
+        let l: f64 = parts[2].trim().parse().map_err(|_| "Invalid HSL value")?;
+        Ok(Self::from_hsl(h, s / 100.0, l / 100.0))
+    }
+
     pub fn to_rgb_string(&self) -> String {
         format!(
-            "rgba({}, {}, {})",
+            "rgb({}, {}, {})",
             (self.r * 255.0) as u8,
             (self.g * 255.0) as u8,
             (self.b * 255.0) as u8
@@ -98,7 +167,13 @@ impl Color {
                 float_to_u8(self.b),
                 float_to_u8(a)
             ),
-            None => self.to_rgb_string(),
+            None => format!(
+                "rgba({}, {}, {}, {})",
+                float_to_u8(self.r),
+                float_to_u8(self.g),
+                float_to_u8(self.b),
+                1
+            ),
         }
     }
 
