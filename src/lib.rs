@@ -114,10 +114,16 @@ impl Color {
 
     // Parse from an RGB string
     pub fn parse_rgb(s: &str) -> Result<Self, String> {
+        let s = s
+            .trim()
+            .trim_start_matches("rgb(")
+            .trim_end_matches(")")
+            .trim();
         let parts: Vec<&str> = s.split(',').collect();
         if parts.len() != 3 {
             return Err("Invalid RGB format".to_string());
         }
+
         let r: f64 = parts[0].trim().parse().map_err(|_| "Invalid RGB value")?;
         let g: f64 = parts[1].trim().parse().map_err(|_| "Invalid RGB value")?;
         let b: f64 = parts[2].trim().parse().map_err(|_| "Invalid RGB value")?;
@@ -126,6 +132,11 @@ impl Color {
 
     // Parse from an RGBA string
     pub fn parse_rgba(s: &str) -> Result<Self, String> {
+        let s = s
+            .trim()
+            .trim_start_matches("rgba(")
+            .trim_end_matches(")")
+            .trim();
         let parts: Vec<&str> = s.split(',').collect();
         if parts.len() != 4 {
             return Err("Invalid RGBA format".to_string());
@@ -139,13 +150,26 @@ impl Color {
 
     // Parse from an HSL string
     pub fn parse_hsl(s: &str) -> Result<Self, String> {
+        let s = s
+            .trim()
+            .trim_start_matches("hsl(")
+            .trim_end_matches(")")
+            .trim();
         let parts: Vec<&str> = s.split(',').collect();
         if parts.len() != 3 {
             return Err("Invalid HSL format".to_string());
         }
         let h: f64 = parts[0].trim().parse().map_err(|_| "Invalid HSL value")?;
-        let s: f64 = parts[1].trim().parse().map_err(|_| "Invalid HSL value")?;
-        let l: f64 = parts[2].trim().parse().map_err(|_| "Invalid HSL value")?;
+        let s: f64 = parts[1]
+            .trim()
+            .trim_end_matches("%")
+            .parse()
+            .map_err(|_| "Invalid HSL value")?;
+        let l: f64 = parts[2]
+            .trim()
+            .trim_end_matches("%")
+            .parse()
+            .map_err(|_| "Invalid HSL value")?;
         Ok(Self::from_hsl(h, s / 100.0, l / 100.0))
     }
 
